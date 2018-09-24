@@ -1,0 +1,58 @@
+body{
+	margin:0;
+}
+@font-face{
+	font-family: clock-font;
+	src:url('../font/TickingTimebombBB_ital.ttf');
+}
+#container{
+	position: relative;
+	padding-top: 0px;
+	padding-left: 0px;
+
+}
+#containerCenter{
+	margin:auto;
+	width:600px;
+	height:200px;
+
+}
+#background_canvas{
+	z-index:1;
+	position:absolute;
+	top:0;
+	left:0;
+}
+#my_canvas{
+	z-index:2;
+	position:absolute;
+	margin:auto;
+	background-color: white;
+}
+
+.button {
+  display: inline-block;
+  padding: 15px 25px;
+  font-size: 24px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  outline: none;
+  color: #fff;
+  background-color: #4CAF50;
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 9px #999;
+  z-index:3;
+  position:absolute;
+  left:40%;
+  top:40%
+}
+
+.button:hover {background-color: #3e8e41}
+
+.button:active {
+  background-color: #3e8e41;
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+}
