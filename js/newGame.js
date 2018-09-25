@@ -6,6 +6,9 @@ spikesTop.src = 'images/spikesTop.png';
 var spikesBottom = new Image();
 spikesBottom.src = 'images/spikesBottom.png';
 
+var spikesLeft;
+var spikesRight;
+var bot;
 var leftSpikeAnimateInterval;
 var rightSpikeAnimateInterval;
 
@@ -73,6 +76,7 @@ ObstacleLeft = function(){
 	this.animateInterval;
 	this.animateCounter=0;
 	this.x=0;
+
 	this.render = function(){
 		for(i = 0; i < 10; i++){
 			if(this.spikes[i] == 1){
@@ -155,7 +159,7 @@ ObstacleLeft = function(){
 			return;
 		}
 		if(this.animateCounter == this.width){
-			this.render();
+			this.generateSpikes();
 		}
 		if(this.animateCounter < this.width){
 			this.x -= 1;
@@ -167,22 +171,63 @@ ObstacleLeft = function(){
 
 	}
 	this.newSpikes = function(){
-		this.animateInterval = setInterval(this.animate, 50);
+		//this.animateInterval = setInterval(this.animate, 50);
+		this.animateInterval = setInterval(animateLeft, 10);
 	}
 }
 
+animateRight = function(){
+	if(spikesRight.animateCounter == spikesRight.width * 2){
+		clearInterval(spikesRight.animateInterval);
+		spikesRight.animateCounter = 0;
+		spikesRight.x = 0;
+		return;
+	}
 
+	if((spikesRight.animateCounter == spikesRight.width)){
+		spikesRight.generateSpikes(level);
+	}
+	if(spikesRight.animateCounter < spikesRight.width){
+		spikesRight.x += 1;
+	}
+	else{
+		spikesRight.x -= 1;
+	}
+	spikesRight.animateCounter++;
+}
+
+animateLeft = function(){
+	if(spikesLeft.animateCounter == spikesLeft.width * 2){
+		clearInterval(spikesLeft.animateInterval);
+		spikesLeft.animateCounter = 0;
+	 	spikesLeft.x = 0;
+	}
+
+	if(spikesLeft.animateCounter == spikesLeft.width){
+		spikesLeft.generateSpikes(level);
+	}
+	if(spikesLeft.animateCounter < spikesLeft.width){
+		spikesLeft.x -= 1;
+	}
+	else{
+		spikesLeft.x += 1;
+	}
+	spikesLeft.animateCounter++;
+}
 ObstacleRight = function(){
 	this.spikes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 	this.width = 30;
 	this.height = 57;
 	this.spikeImg = new Image();
 	this.spikeImg.src = 'images/spikeRight.png';
+	this.animateInterval;
+	this.animateCounter=0;
+	this.x=0;
 
 	this.render = function(){
 		for(i = 0; i < 10; i++){
 			if(this.spikes[i] == 1){
-				ctx.drawImage(this.spikeImg, WIDTH - this.width, TOP_MARGIN + i*this.height, this.width, this.height);
+				ctx.drawImage(this.spikeImg, WIDTH - this.width + this.x, TOP_MARGIN + i*this.height, this.width, this.height);
 			}
 		}
 	}
@@ -192,6 +237,9 @@ ObstacleRight = function(){
 			n = 9;
 		}
 		var spikesGenerated = 0;
+		for(i=0; i<10; i++){
+			this.spikes[i]=0;
+		}
 
 		while(spikesGenerated < n){
 			var rand = Math.abs(Math.floor(Math.random()*10-0.00000001));
@@ -305,6 +353,11 @@ ObstacleRight = function(){
 		}
 		return false;
 	}
+
+	this.newSpikes = function(){
+		this.animateInterval = setInterval(animateRight, 10);
+	}
+
 }
 Bot = function(x, y, direction){
 	this.pause = true;
@@ -332,7 +385,7 @@ Bot = function(x, y, direction){
 		if(this.direction=='left'){
 			if(this.x <=0){
 				this.direction = 'right';
-				collision = 'right';
+				collision = 'left';
 			}
 			else{
 				this.x -= this.velX;
@@ -341,7 +394,7 @@ Bot = function(x, y, direction){
 		else{
 			if(this.x + this.width >= WIDTH){
 				this.direction = 'left';
-				collision = 'left';
+				collision = 'right';
 			}
 			else{
 				this.x += this.velX;
@@ -393,6 +446,9 @@ updateVariables = function(){
 
 	if(collisionWithWall == 'left'){
 		spikesLeft.newSpikes();
+	}
+	else if(collisionWithWall == 'right'){
+		spikesRight.newSpikes();
 	}
 	if(spikesLeft.isColliding(bot)){
 		console.log('hit');
