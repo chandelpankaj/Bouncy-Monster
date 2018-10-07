@@ -12,7 +12,7 @@ var bot;
 var leftSpikeAnimateInterval;
 var rightSpikeAnimateInterval;
 
-var level = 4;
+var level = 2;
 var animateInterval;
 var bot;
 const FPS = 50;
@@ -21,8 +21,8 @@ const ACCELERATION = 0.4;
 const MAX_YVEL = 8;
 const WIDTH = ctx.canvas.width;
 const HEIGHT = ctx.canvas.height;
-
-
+var score = 0;
+var highScore = 0;
 
 var button = {
 	space:{'pressed':false, 'released':true},
@@ -417,6 +417,15 @@ isCollidiingWithTopBottom = function(bot){
 	return false;
 }
 
+drawScore = function(x, y, s){
+	ctx.save();
+	ctx.font = "20px Comic Sans MS";
+	ctx.fillStyle = "white";
+	ctx.textAlign="left";
+	ctx.fillText(s , x, y); 
+	ctx.restore();
+}
+
 render = function(){
 
 	ctx.save();
@@ -432,23 +441,41 @@ render = function(){
 
 	ctx.drawImage(spikesTop, 0, 20, WIDTH, 20);
 	ctx.drawImage(spikesBottom, 0, HEIGHT - 40, WIDTH, 20);
-
 	ctx.fillStyle = 'rgba(0,0,0,1)';
 	ctx.fillRect(0, 0, WIDTH, 20);
 	ctx.fillRect(0, HEIGHT-20, WIDTH, 20);
+
+	drawScore(10, 17,"Score: "+ score);
+	drawScore(WIDTH - 180, 17, "High Score: " + highScore);
 	// draw top wall
 
 	ctx.restore();
 }
+
 updateVariables = function(){
 	// move bot
+
 	var collisionWithWall = bot.update();
 
 	if(collisionWithWall == 'left'){
+		score += 5;
+		if(score > highScore)
+			highScore = score;
 		spikesLeft.newSpikes();
+
+		if(score % 500==0 && level < 8){
+		level += 1;
+	}
 	}
 	else if(collisionWithWall == 'right'){
+		score += 5;
+		if(score > highScore)
+			highScore = score;
 		spikesRight.newSpikes();
+
+		if(score % 500==0 && level < 8){
+		level += 1;
+	}
 	}
 	if(spikesLeft.isColliding(bot)){
 		console.log('hit');
@@ -461,10 +488,11 @@ updateVariables = function(){
 	}
 
 	if(isCollidiingWithTopBottom(bot)){
-		console.log('hit3');
+
 		bot.dead = true;
 	}
 	if(bot.dead){
+		score = 0;
 		var elem = document.getElementById('playbutton');
 	    if(elem != null){
 	    	//elem.parentNode.removeChild(elem);
@@ -472,6 +500,7 @@ updateVariables = function(){
 	    }
 	}
 }
+
 handleEvents = function(){
 
 	if(button.space.pressed == true){
@@ -484,12 +513,15 @@ handleEvents = function(){
 		}
 	}
 }
+
 update = function(){
 	handleEvents();
 	updateVariables();
 	render();
 }
+
 mainPage = function(){
+	
 	var elem = document.getElementById('playbutton');
     if(elem != null){
     	//elem.parentNode.removeChild(elem);
@@ -498,8 +530,8 @@ mainPage = function(){
 	bot = new Bot(WIDTH/2 -10, 2*HEIGHT/3, 'left');
 	spikesLeft = new ObstacleLeft();
 	spikesRight = new ObstacleRight();
-	spikesLeft.generateSpikes(5);
-	spikesRight.generateSpikes(4);
+	spikesLeft.generateSpikes(level);
+	spikesRight.generateSpikes(level);
 	animateInterval = setInterval(update,1000/FPS);
 
 }
