@@ -17,6 +17,14 @@ body{
 	height:200px;
 
 }
+#generation{
+  float:left;
+    background-color: #666;
+    padding: 30px;
+    text-align: center;
+    font-size: 35px;
+    color: white;
+}
 #background_canvas{
 	z-index:1;
 	position:absolute;
