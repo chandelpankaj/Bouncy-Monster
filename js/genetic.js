@@ -32,7 +32,7 @@ GeneticAlgorithm.prototype = {
 		for (var i=0; i<this.max_units; i++){
 			// create a new unit by generating a random Synaptic neural network
 			// with 2 neurons in the input layer, 6 neurons in the hidden layer and 1 neuron in the output layer
-			var newUnit = new synaptic.Architect.Perceptron(2, 6, 1);
+			var newUnit = new synaptic.Architect.Perceptron(3, 6, 1);
 			
 			// set additional parameters for the new unit
 			newUnit.index = i;
@@ -53,9 +53,12 @@ GeneticAlgorithm.prototype = {
 		
 		// input 2: the height difference between the bot and the target
 		var targetDeltaY = this.normalize(bot.vDistance, 570) * this.SCALE_FACTOR;
+
+		// input 3: current velocity of the bot
+		var targetVel = this.normalize(bot.velY, 25) * this.SCALE_FACTOR;
 	
 		// create an array of all inputs
-		var inputs = [targetDeltaX, targetDeltaY];
+		var inputs = [targetVel, targetDeltaX, targetDeltaY];
 		
 		// calculate outputs by activating synaptic neural network of this bot
 		var outputs = this.Population[index].activate(inputs);

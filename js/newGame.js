@@ -3,14 +3,14 @@ var ctx = document.getElementById('my_canvas').getContext('2d');
 var spikesTop = new Image();
 spikesTop.src = 'images/spikesTop.png';
 
-const FPS = 50;
+var FPS= 50;
 var started = false;
 var spikesBottom = new Image();
 spikesBottom.src = 'images/spikesBottom.png';
 var GA;
 var maxBots = 10;
 var spikesLeft;
-var spikesRight;
+var spikesRight; 
 var bot =[];
 var leftSpikeAnimateInterval;
 var rightSpikeAnimateInterval;
@@ -27,6 +27,15 @@ const PLAY_HEIGHT = 650;
 
 var score = 0;
 var highScore = 0;
+
+speedup = function(n){
+	if(n==1){
+		return;
+	}
+	FPS = Math.ceil(FPS*n);
+	clearInterval(animateInterval);
+	animateInterval=setInterval(update, 1000/FPS)
+}
 
 var button = {
 	space:{'pressed':false, 'released':true},
@@ -84,8 +93,9 @@ document.addEventListener('keydown',function(event){
 });
 
 
-function drawLine(ax, ay, bx, by){
+function drawLine(ax, ay, bx, by, width=1){
 	ctx.beginPath();
+	ctx.lineWidth=width;
 	ctx.moveTo(ax, ay);
 	ctx.lineTo(bx, by);
 	ctx.stroke();
@@ -123,6 +133,7 @@ ObstacleLeft = function(){
 		for(i=0; i<10; i++){
 			this.spikes[i]=0;
 		}
+		
 		while(spikesGenerated < n){
 			var rand = Math.abs(Math.floor(Math.random()*10-0.00000001));
 			if(this.spikes[rand] != 1){
@@ -132,7 +143,7 @@ ObstacleLeft = function(){
 		}
 
 		for(i=0;i<9;i++){
-			if(this.spikes[i] == 0){
+			if(this.spikes[i]==0){
 				this.spikes[i+1]=0;
 				break;
 			}
@@ -281,7 +292,6 @@ ObstacleRight = function(){
 		for(i=0; i<10; i++){
 			this.spikes[i]=0;
 		}
-
 		while(spikesGenerated < n){
 			var rand = Math.abs(Math.floor(Math.random()*10-0.00000001));
 			if(this.spikes[rand] != 1){
@@ -291,7 +301,7 @@ ObstacleRight = function(){
 		}
 
 		for(i=0;i<9;i++){
-			if(this.spikes[i] == 0){
+			if(this.spikes[i]==0){
 				this.spikes[i+1]=0;
 				break;
 			}
@@ -413,7 +423,7 @@ ObstacleRight = function(){
 }
 
 verticalDistanceFromSpike = function(y, spikeNo){
-	var spikeMid = (TOP_MARGIN + (spikeNo +1) * spikesLeft.height);
+	var spikeMid = (TOP_MARGIN + (spikeNo+1) * spikesLeft.height);
 	var dist = y - spikeMid;
 	return dist;
 }
@@ -485,6 +495,7 @@ Bot = function(x, y, direction){
 	this.nearestGap = getNearestGap(this.y, this.direction);
 	this.hDistance = horizontalDistance(this.x + this.height/2 , this.direction);
 	this.vDistance = verticalDistanceFromSpike(this.y, this.nearestGap);
+	this.waitingTime=0;
 
 	this.flap = function(){
 		this.velY = -MAX_YVEL;
@@ -501,9 +512,10 @@ Bot = function(x, y, direction){
 			if(this.x <=0){
 				this.direction = 'right';
 				collision = 'left';
-				this.nearestGap = getNearestGap(this.y, 'right');
-				this.vDistance = verticalDistanceFromSpike(this.y, this.nearestGap);
+				//this.nearestGap = getNearestGap(this.y, 'right');
+				//this.vDistance = verticalDistanceFromSpike(this.y, this.nearestGap);
 				this.score_curr++;
+				this.waitingTime = Math.ceil((spikesRight.width-this.width/2)/this.velX);
 			}
 			else{
 				this.x -= this.velX;
@@ -514,9 +526,10 @@ Bot = function(x, y, direction){
 				this.direction = 'left';
 				collision = 'right';
 
-				this.nearestGap = getNearestGap(this.y, 'left');
-				this.vDistance = verticalDistanceFromSpike(this.y, this.nearestGap);
+				//this.nearestGap = getNearestGap(this.y, 'left');
+				//this.vDistance = verticalDistanceFromSpike(this.y, this.nearestGap);
 				this.score_curr++;
+				this.waitingTime = Math.ceil((spikesRight.width-this.width/2)/this.velX);
 			}
 			else{
 				this.x += this.velX;
@@ -526,11 +539,24 @@ Bot = function(x, y, direction){
 		this.y += this.velY;
 		this.velY += this.acceleration;
 
-		this.vDistance = verticalDistanceFromSpike(this.y, this.nearestGap);
+		if(this.waitingTime==0){
+			this.nearestGap = getNearestGap(this.y, this.direction);
+			this.vDistance = verticalDistanceFromSpike(this.y, this.nearestGap);
+			this.hDistance = horizontalDistance(this.x + this.width/2 , this.direction) + spikesLeft.width;
+		}
+		else{
+			this.waitingTime--;
+			this.vDistance = verticalDistanceFromSpike(this.y, this.nearestGap);
+			if(this.direction == 'right'){
+				this.hDistance = spikesLeft.width - (this.x + this.width/2);
+			}
+			else{
+				this.hDistance = spikesLeft.width - horizontalDistance(this.x + this.width/2, 'right');
+			}
+		}
 		
-		
+		//console.log(this.hDistance);
 		//this.vDistance = verticalDistanceFromSpike(this.y, this.nearestGap);
-		this.hDistance = horizontalDistance(this.x + this.height/2 , this.direction);
 		
 		return collision;
 	}
@@ -572,9 +598,13 @@ render = function(){
 
 	ctx.save();
 	// clear canvas
-	ctx.clearRect(0,0,PLAY_WIDTH,PLAY_HEIGHT);
+	ctx.clearRect(0, 0, WIDTH, PLAY_HEIGHT);
+
+	// draw seperation line
+	drawLine(PLAY_WIDTH, 0, PLAY_WIDTH, HEIGHT, 3);
 
 	// draw bot
+
 	for(b=0;b<maxBots;b++){
 		if(!bot[b].dead)
 			bot[b].render();
@@ -588,13 +618,15 @@ render = function(){
 	ctx.drawImage(spikesBottom, 0, PLAY_HEIGHT - 20, PLAY_WIDTH, 20);
 
 	ctx.fillStyle = 'rgba(0,0,0,1)';
+
+	ctx.clearRect(PLAY_WIDTH + 1, 0, WIDTH, HEIGHT);
+
+
 	//ctx.fillRect(0, 0, PLAY_WIDTH, 20);
 	//ctx.fillRect(0, PLAY_HEIGHT-20, PLAY_WIDTH, 20);
-
 	//drawScore(10, 17,"Score: "+ score);
 	//drawScore(PLAY_WIDTH - 180, 17, "High Score: " + highScore);
 	// draw top wall
-
 	ctx.restore();
 }
 
