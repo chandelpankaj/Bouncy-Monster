@@ -1,12 +1,52 @@
 var ctx = document.getElementById('my_canvas').getContext('2d');
-
 var spikesTop = new Image();
-spikesTop.src = 'images/spikesTop.png';
+spikesTop.src = 'images/spikesTop1.png';
+var background = new Image();
+background.src = 'images/background.jpg';
+var backgroundHomepage = new Image();
+backgroundHomepage.src = 'images/background1.jpg';
+var bestUnitIndex = 0;
+var bestUnitFitness = 0;
+
+var gameName , gPosx, gPosy, gDashLen, gDashOffset , gSpeed, gCharNo;
+
+
+
+var monster = [];
+for(var i=0;i<10;i++){
+	monster[i] = new Image();
+}
+
+var lastGen = {
+	"Population":[
+	{"score":0,"fitness":0},
+	{"score":0,"fitness":0},
+	{"score":0,"fitness":0},
+	{"score":0,"fitness":0},
+	{"score":0,"fitness":0},
+	{"score":0,"fitness":0},
+	{"score":0,"fitness":0},
+	{"score":0,"fitness":0},
+	{"score":0,"fitness":0},
+	{"score":0,"fitness":0}
+	]
+}
+
+monster[0].src = 'images/Red1.png';
+monster[1].src = 'images/Red2.png';
+monster[2].src = 'images/Red3.png';
+monster[3].src = 'images/Red4.png';
+monster[4].src = 'images/Green1.png';
+monster[5].src = 'images/Red5.png';
+monster[6].src = 'images/Orange1.png';
+monster[7].src = 'images/Red6.png';
+monster[8].src = 'images/Pink1.png';
+monster[9].src = 'images/Red7.png';
 
 var FPS= 50;
 var started = false;
 var spikesBottom = new Image();
-spikesBottom.src = 'images/spikesBottom.png';
+spikesBottom.src = 'images/spikesBottom1.png';
 var GA;
 var maxBots = 10;
 var spikesLeft;
@@ -42,6 +82,50 @@ var button = {
 	enter:{'enter':false},
 	esc:{'esc':false}
 };
+
+
+
+
+function DrawText() {
+
+  	ctx.setLineDash([gDashLen - gDashOffset, gDashOffset - gSpeed]); 
+  	gDashOffset -= gSpeed;                                         
+  	ctx.strokeText(gameName[gCharNo], gPosx, gPosy);                              
+
+  	if (gDashOffset > 0) requestAnimationFrame(DrawText);             
+  	else {
+    	ctx.fillText(gameName[gCharNo], gPosx, gPosy);                           
+    	gDashOffset = gDashLen;                                     
+    	gPosx += ctx.measureText(gameName[gCharNo++]).width + ctx.lineWidth * Math.random();
+    	ctx.setTransform(1, 0, 0, 1, 0, 3 * Math.random());       
+    	ctx.rotate(Math.random() * 0.005);                      
+    	if (gCharNo < gameName.length)
+    		requestAnimationFrame(DrawText);
+  	}
+}
+
+
+function drawAnimatedText(posx, posy){
+
+	gameName = "BOUNCY-MONSTER";
+	gPosx=posx;
+	gPosy=posy;
+	gDashLen = 220;
+	gDashOffset = 220;
+	gSpeed = 10;
+	gCharNo = 0;
+
+	ctx.save();
+	ctx.font = "50px Comic Sans MS, cursive, TSCu_Comic, sans-serif"; 
+	ctx.lineWidth = 5; ctx.lineJoin = "round"; ctx.globalAlpha = 2/3;
+	ctx.strokeStyle = ctx.fillStyle = "green";
+
+	ctx.drawImage(background, 0,0, WIDTH, HEIGHT);
+	DrawText();
+}
+
+//drawAnimatedText(10,200);
+
 
 document.addEventListener('keypress', function(event){
 	switch(event.keyCode){
@@ -112,7 +196,7 @@ ObstacleLeft = function(){
 	this.width = 30;
 	this.height = 57;
 	this.spikeImg = new Image();
-	this.spikeImg.src = 'images/spikeLeft.png';
+	this.spikeImg.src = 'images/spikeMonsterLeft.png';
 	this.animateInterval;
 	this.animateCounter=0;
 	this.x=0;
@@ -271,7 +355,7 @@ ObstacleRight = function(){
 	this.width = 30;
 	this.height = 57;
 	this.spikeImg = new Image();
-	this.spikeImg.src = 'images/spikeRight.png';
+	this.spikeImg.src = 'images/spikeMonsterRight.png';
 	this.animateInterval;
 	this.animateCounter=0;
 	this.x=0;
@@ -476,7 +560,7 @@ horizontalDistance = function(px, direction){
 		return (PLAY_WIDTH - px);
 	}
 }
-Bot = function(x, y, direction){
+Bot = function(botNumber, x, y, direction){
 	this.pause = true;
 	this.x = x;
 	this.y = y;
@@ -490,8 +574,7 @@ Bot = function(x, y, direction){
 	this.fitness_curr = 0;
 	this.score_curr =0;
 	this.direction = direction;
-	this.img = new Image();
-	this.img.src = 'images/bot.png';
+	this.img = monster[botNumber];
 	this.nearestGap = getNearestGap(this.y, this.direction);
 	this.hDistance = horizontalDistance(this.x + this.height/2 , this.direction);
 	this.vDistance = verticalDistanceFromSpike(this.y, this.nearestGap);
@@ -570,16 +653,16 @@ Bot = function(x, y, direction){
 		}
 
 		//horizontal line
-		drawLine(this.x + this.height/2, this.y - this.vDistance, this.x + this.height/2 + sign * this.hDistance, this.y - this.vDistance);
+		//drawLine(this.x + this.height/2, this.y - this.vDistance, this.x + this.height/2 + sign * this.hDistance, this.y - this.vDistance);
 		
 		//vertical line
-		drawLine(this.x + this.height/2, this.y, this.x + this.height/2, this.y - this.vDistance);
+		//drawLine(this.x + this.height/2, this.y, this.x + this.height/2, this.y - this.vDistance);
 
 	}
 }
 
 isCollidiingWithTopBottom = function(bot){
-	if(bot.y < 20 || bot.y + bot.height > HEIGHT - 20){
+	if(bot.y < 28 || bot.y + bot.height > HEIGHT - 28){
 		return true;
 	}
 	return false;
@@ -594,11 +677,82 @@ drawScore = function(x, y, s){
 	ctx.restore();
 }
 
+renderInfo = function(){
+
+	ctx.globalAlpha = 0.1;
+	ctx.fillStyle = "gray";
+	ctx.fillRect(PLAY_WIDTH, 0, WIDTH - PLAY_WIDTH, HEIGHT);
+
+
+	ctx.globalAlpha = 0.2;
+	ctx.fillStyle = "blue";
+    ctx.fillRect(PLAY_WIDTH, 5, WIDTH - PLAY_WIDTH ,48);
+
+    ctx.fillRect(PLAY_WIDTH, PLAY_HEIGHT - 90, WIDTH - PLAY_WIDTH, 65);
+    ctx.globalAlpha = 1.0;
+
+
+
+    ctx.font = "bold 15px Comic Sans MS";
+	ctx.fillStyle = "Black";
+	ctx.textAlign = "center";
+
+    ctx.fillText("GEN "+ (GA.iteration -1), PLAY_WIDTH + 170, 40);
+
+    ctx.fillText("GEN "+ GA.iteration, PLAY_WIDTH + 250, 40);
+
+	ctx.font = "bold 15px Comic Sans MS";
+	ctx.fillStyle = "Blue";
+	ctx.textAlign = "right";
+
+	for(let i=0;i<maxBots; i++){
+		drawLine(PLAY_WIDTH, 60 + (i+1) * 50 - 12, WIDTH,  60 + (i+1) * 50 - 12);
+		ctx.drawImage(monster[i], PLAY_WIDTH + 15, 60 + i * 50, 30, 30);
+		ctx.fillText("Fitness:", PLAY_WIDTH + 120,  70 + i * 50);
+		ctx.fillText("Score:", PLAY_WIDTH + 120, 92 + i * 50);
+	}
+
+	ctx.font = "bold 14px Comic Sans MS";
+	ctx.fillStyle = "Green";
+
+	for(let i=0;i<maxBots;i++){
+		ctx.fillText(lastGen.Population[i].fitness, PLAY_WIDTH + 190,  70 + i * 50);
+		ctx.fillText(lastGen.Population[i].score, PLAY_WIDTH + 190,  92 + i * 50);
+	}
+
+	ctx.font = "bold 14px Comic Sans MS";
+	ctx.fillStyle = "Red";
+
+	for(let i=0;i<maxBots;i++){
+		ctx.fillText(bot[i].fitness_curr, PLAY_WIDTH + 270,  70 + i * 50);
+		ctx.fillText(bot[i].score_curr, PLAY_WIDTH + 270,  92 + i * 50);
+	}
+
+	ctx.font = "bold 15px Comic Sans MS";
+	ctx.fillStyle = "Black";
+	ctx.textAlign = "left";
+
+	ctx.fillText("Best Unit was born in Generation " + GA.best_population, PLAY_WIDTH + 15, PLAY_HEIGHT - 72);
+	ctx.fillText("Fitness :" + GA.best_fitness, PLAY_WIDTH + 15, PLAY_HEIGHT - 52);
+	ctx.fillText("Score :" + GA.best_score, PLAY_WIDTH + 15, PLAY_HEIGHT - 32);
+	ctx.drawImage(monster[bestUnitIndex], PLAY_WIDTH + 150, PLAY_HEIGHT - 65, 35, 35);
+
+}
+
 render = function(){
 
 	ctx.save();
-	// clear canvas
+
+
 	ctx.clearRect(0, 0, WIDTH, PLAY_HEIGHT);
+
+	//draw background;
+	ctx.globalAlpha = 0.8;
+	ctx.drawImage(background, 0,0, PLAY_WIDTH, PLAY_HEIGHT);
+	ctx.globalAlpha = 1.0;
+
+
+	// clear canvas
 
 	// draw seperation line
 	drawLine(PLAY_WIDTH, 0, PLAY_WIDTH, HEIGHT, 3);
@@ -614,14 +768,14 @@ render = function(){
 	spikesLeft.render();
 	spikesRight.render();
 
-	ctx.drawImage(spikesTop, 0, 0, PLAY_WIDTH, 20);
-	ctx.drawImage(spikesBottom, 0, PLAY_HEIGHT - 20, PLAY_WIDTH, 20);
+	ctx.drawImage(spikesTop, 0, 0, PLAY_WIDTH, 30);
+	ctx.drawImage(spikesBottom, 0, PLAY_HEIGHT - 30, PLAY_WIDTH, 30);
 
 	ctx.fillStyle = 'rgba(0,0,0,1)';
 
 	ctx.clearRect(PLAY_WIDTH + 1, 0, WIDTH, HEIGHT);
 
-
+	renderInfo();
 	//ctx.fillRect(0, 0, PLAY_WIDTH, 20);
 	//ctx.fillRect(0, PLAY_HEIGHT-20, PLAY_WIDTH, 20);
 	//drawScore(10, 17,"Score: "+ score);
@@ -695,12 +849,22 @@ updateVariables = function(){
 	}
 
 	if(allDead){
+
+		bot = [];
+		for(i=0;i<maxBots;i++){
+    		bot[i] = new Bot(i, PLAY_WIDTH/2-10, PLAY_HEIGHT/2 - Math.floor(maxBots/2) * 50 + i*50 + 50, 'left');
+    		lastGen.Population[i].fitness = GA.Population[i].fitness;
+    		lastGen.Population[i].score = GA.Population[i].score;
+    		if(bestUnitFitness < GA.Population[i].fitness){
+    			bestUnitFitness = GA.Population[i].fitness;
+    			bestUnitIndex = i;
+    		}
+    	}
+
 		GA.evolvePopulation();
 		GA.iteration++;
 		document.getElementById("generation").innerHTML = "Generation : " + GA.iteration;
-		if(GA.iteration % 200==0 && level < 8){
-			level += 1;
-		}
+		
 		//score = 0;
 		/*var elem = document.getElementById('playbutton');
 	    if(elem != null){
@@ -709,10 +873,7 @@ updateVariables = function(){
 	    }
 
 		clearInterval(animateInterval);*/
-		bot = [];
-		for(i=0;i<maxBots;i++){
-    		bot[i] = new Bot(PLAY_WIDTH/2-10, PLAY_HEIGHT/2 - Math.floor(maxBots/2) * 50 + i*50 + 50, 'left');
-    	}
+
 
 	}
 }
@@ -742,8 +903,8 @@ mainPage = function(){
     	//elem.parentNode.removeChild(elem);
     	elem.style.display = 'none';
     }
-
-
+    ctx.restore();
+    
 	GA = new GeneticAlgorithm(10, 4);
 	GA.reset();
 	GA.createPopulation();
@@ -755,10 +916,16 @@ mainPage = function(){
 
     //create bots
     for(i=0;i<maxBots;i++){
-    	bot[i] = new Bot(PLAY_WIDTH/2-10, PLAY_HEIGHT/2 - Math.floor(maxBots/2) * 50 + i*50 + 50, 'left');
+    	bot[i] = new Bot(i, PLAY_WIDTH/2-10, PLAY_HEIGHT/2 - Math.floor(maxBots/2) * 50 + i*50 + 50, 'left');
     }
 
 	animateInterval = setInterval(update,1000/FPS);
 
 }
-// mainPage();
+drawHomePage = function(){
+	//ctx.drawImage(backgroundHomepage, 0, 0, WIDTH, HEIGHT);
+	ctx.drawImage(background, 0,0, WIDTH, HEIGHT);
+	//drawAnimatedText(50, 200);
+
+}
+drawHomePage();
